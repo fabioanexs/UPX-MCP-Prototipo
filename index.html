@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FinanceMCP — Portal Prototype</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: oklch(0.985 0.005 90);
+    --surface: #ffffff;
+    --surface-2: oklch(0.97 0.005 90);
+    --surface-3: oklch(0.94 0.006 90);
+    --border: oklch(0.91 0.006 90);
+    --border-strong: oklch(0.84 0.008 90);
+    --text: oklch(0.18 0.01 90);
+    --text-muted: oklch(0.45 0.008 90);
+    --text-dim: oklch(0.6 0.006 90);
+    --accent: oklch(0.58 0.13 155);
+    --accent-fg: #ffffff;
+    --accent-soft: oklch(0.95 0.04 155);
+    --accent-soft-fg: oklch(0.38 0.13 155);
+    --danger: oklch(0.58 0.18 27);
+    --danger-soft: oklch(0.95 0.04 27);
+    --warning: oklch(0.72 0.14 75);
+    --warning-soft: oklch(0.95 0.05 75);
+    --info: oklch(0.58 0.12 240);
+    --info-soft: oklch(0.95 0.04 240);
+    --shadow-sm: 0 1px 0 rgba(20,20,20,0.04), 0 1px 2px rgba(20,20,20,0.04);
+    --shadow-md: 0 1px 0 rgba(20,20,20,0.04), 0 4px 12px rgba(20,20,20,0.06);
+    --shadow-lg: 0 12px 32px rgba(20,20,20,0.08), 0 2px 6px rgba(20,20,20,0.04);
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 14px;
+    --r-xl: 20px;
+    --font: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  [data-theme="dark"] {
+    --bg: oklch(0.17 0.005 250);
+    --surface: oklch(0.21 0.006 250);
+    --surface-2: oklch(0.24 0.006 250);
+    --surface-3: oklch(0.28 0.007 250);
+    --border: oklch(0.30 0.008 250);
+    --border-strong: oklch(0.38 0.01 250);
+    --text: oklch(0.96 0.005 90);
+    --text-muted: oklch(0.72 0.007 90);
+    --text-dim: oklch(0.55 0.008 90);
+    --accent-soft: oklch(0.28 0.06 var(--accent-hue, 155));
+    --accent-soft-fg: oklch(0.82 0.12 var(--accent-hue, 155));
+    --danger-soft: oklch(0.28 0.07 27);
+    --warning-soft: oklch(0.30 0.07 75);
+    --info-soft: oklch(0.28 0.06 240);
+    --shadow-sm: 0 1px 0 rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.25);
+    --shadow-md: 0 1px 0 rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.35);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: oklch(0.12 0.005 250); }
+  body {
+    font-family: var(--font);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+  }
+  #root { width: 100%; max-width: 1320px; }
+
+  /* Shared utility classes */
+  .mono { font-family: var(--mono); font-feature-settings: "ss01"; }
+  .pl-app { background: var(--bg); color: var(--text); min-height: 760px; }
+  .pl-app * { font-family: inherit; }
+
+  button { font-family: inherit; }
+  input, select, textarea { font-family: inherit; color: inherit; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 9px 14px; border-radius: var(--r-md); font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border-strong); background: var(--surface);
+    color: var(--text); cursor: pointer; transition: all .12s ease;
+    line-height: 1; white-space: nowrap;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn:active { transform: translateY(0.5px); }
+  .btn-primary {
+    background: var(--accent); color: var(--accent-fg);
+    border-color: color-mix(in oklch, var(--accent) 70%, black);
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.14);
+  }
+  .btn-primary:hover { background: color-mix(in oklch, var(--accent) 90%, black); }
+  .btn-ghost { border-color: transparent; background: transparent; }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 7px; }
+  .btn-icon { width: 28px; height: 28px; padding: 0; border-radius: 7px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
+  }
+
+  /* Pills / badges */
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 500;
+    background: var(--surface-2); color: var(--text-muted);
+    border: 1px solid var(--border);
+    line-height: 1.4; white-space: nowrap;
+  }
+  .pill-success { background: var(--accent-soft); color: var(--accent-soft-fg); border-color: transparent; }
+  .pill-warn { background: var(--warning-soft); color: oklch(0.45 0.14 75); border-color: transparent; }
+  .pill-danger { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+  .pill-info { background: var(--info-soft); color: oklch(0.45 0.13 240); border-color: transparent; }
+
+  [data-theme="dark"] .pill-warn { color: oklch(0.78 0.14 75); }
+  [data-theme="dark"] .pill-danger { color: oklch(0.78 0.16 27); }
+  [data-theme="dark"] .pill-info { color: oklch(0.78 0.12 240); }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  /* Headings */
+  h1, h2, h3, h4 { margin: 0; font-weight: 500; letter-spacing: -0.01em; }
+  h1 { font-size: 28px; letter-spacing: -0.02em; }
+  h2 { font-size: 20px; letter-spacing: -0.015em; }
+  h3 { font-size: 15px; }
+
+  p { margin: 0; }
+
+  /* Forms */
+  .input {
+    width: 100%; padding: 9px 12px; font-size: 13px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border-strong); border-radius: var(--r-md);
+    outline: none; transition: border-color .12s, box-shadow .12s;
+  }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 20%, transparent); }
+  .input::placeholder { color: var(--text-dim); }
+
+  /* Tables */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl thead th {
+    text-align: left; font-weight: 500; color: var(--text-muted);
+    padding: 10px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+  }
+  .tbl tbody td {
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .tbl tbody tr:last-child td { border-bottom: 0; }
+  .tbl tbody tr:hover { background: var(--surface-2); }
+
+  /* Code blocks */
+  .codeblock {
+    background: oklch(0.16 0.005 250); color: oklch(0.92 0.005 90);
+    border-radius: var(--r-md); padding: 14px 16px; font-family: var(--mono);
+    font-size: 12px; line-height: 1.6; overflow-x: auto; white-space: pre;
+    border: 1px solid oklch(0.22 0.006 250);
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid color-mix(in oklch, var(--text) 18%, transparent);
+    border-top-color: currentColor;
+    animation: spin .7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Sidebar nav (portal chrome) */
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: 8px;
+    font-size: 13px; color: var(--text-muted);
+    cursor: pointer; transition: background .12s;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--surface-2); color: var(--text); font-weight: 500; }
+
+  /* Wizard step rail */
+  .step-rail {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .step-rail .step {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 8px;
+    font-size: 13px; cursor: pointer;
+    color: var(--text-muted); transition: background .12s;
+    border: 1px solid transparent;
+  }
+  .step-rail .step:hover { background: var(--surface-2); }
+  .step-rail .step.active { color: var(--text); background: var(--surface-2); border-color: var(--border); }
+  .step-rail .step.done { color: var(--text); }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500;
+    background: var(--surface-2); border: 1px solid var(--border-strong);
+    color: var(--text-muted); flex-shrink: 0;
+  }
+  .step.done .step-num { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+  .step.active .step-num { background: var(--text); color: var(--bg); border-color: transparent; }
+
+  /* Sparkline / chart */
+  .spark { display: block; width: 100%; height: 60px; }
+
+  /* Animations */
+  .fade-up { /* animation removed — was being throttled in iframe captures */ }
+
+  /* Modal backdrop */
+  .modal-bg {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50; backdrop-filter: blur(2px);
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<template id="__bundler_thumbnail" data-bg-color="#f6f4ef">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#f6f4ef"/>
+    <rect x="380" y="220" width="440" height="360" rx="48" fill="#ffffff" stroke="#e3ddd0" stroke-width="3"/>
+    <g transform="translate(600 400)" stroke="#3a8862" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M-130 0 H-60 L-20 -120 L40 130 L80 -40 H140"/>
+    </g>
+    <circle cx="600" cy="262" r="14" fill="#3a8862"/>
+  </svg>
+</template>
+
+<!-- Pinned React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Mock data -->
+<script src="src/data.js"></script>
+
+<!-- Starters -->
+<script type="text/babel" src="browser-window.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+
+<!-- App parts -->
+<script type="text/babel" src="src/ui.jsx"></script>
+<script type="text/babel" src="src/wizard.jsx"></script>
+<script type="text/babel" src="src/wizard-compact.jsx"></script>
+<script type="text/babel" src="src/wizard-mcp-first.jsx"></script>
+<script type="text/babel" src="src/dashboard.jsx"></script>
+<script type="text/babel" src="src/dashboard-tabs.jsx"></script>
+<script type="text/babel" src="src/app.jsx"></script>
+
+<!-- Tweaks defaults -->
+<script>
+  window.TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "theme": "light",
+    "accent": "emerald",
+    "country": "BR",
+    "view": "wizard",
+    "wizardStep": 0,
+    "flow": "mcp_first"
+  }/*EDITMODE-END*/;
+</script>
+
+</body>
+</html>
