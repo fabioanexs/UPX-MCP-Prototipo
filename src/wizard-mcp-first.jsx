@@ -11,14 +11,31 @@
 
 const MCP_CLIENTS = [
   {
-    id: 'claude',
+    id: 'claude_desktop',
     name: 'Claude Desktop',
     badge: 'desktop',
     mockBrand: 'aurora',
     settingsPath: 'Settings → Developer → Edit Config',
     filePath: '~/Library/Application Support/Claude/claude_desktop_config.json',
-    configKey: 'mcpServers',
     desc: 'macOS / Windows desktop app',
+  },
+  {
+    id: 'claude_web',
+    name: 'Claude Web',
+    badge: 'web',
+    mockBrand: 'aurora',
+    settingsPath: 'Settings → Connectors → Add custom connector',
+    filePath: 'In-app · Settings › Connectors',
+    desc: 'Browser-based, OAuth handshake',
+  },
+  {
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    badge: 'desktop',
+    mockBrand: 'sage',
+    settingsPath: 'Settings → Connectors → Add MCP server',
+    filePath: '~/Library/Application Support/ChatGPT/mcp.json',
+    desc: 'macOS / Windows / Web',
   },
   {
     id: 'cursor',
@@ -27,18 +44,25 @@ const MCP_CLIENTS = [
     mockBrand: 'graphite',
     settingsPath: 'Cmd-Shift-P → "MCP: Edit Config"',
     filePath: '~/.cursor/mcp.json',
-    configKey: 'mcpServers',
     desc: 'AI-first code editor',
   },
   {
-    id: 'chatgpt',
-    name: 'AI Assistant',
-    badge: 'desktop',
-    mockBrand: 'lagoon',
-    settingsPath: 'Settings → Integrations → Add MCP server',
-    filePath: 'Set in app preferences',
-    configKey: 'servers',
-    desc: 'Any MCP-capable host',
+    id: 'manus',
+    name: 'Manus',
+    badge: 'agent',
+    mockBrand: 'coral',
+    settingsPath: 'Workspace → Tools → Add MCP endpoint',
+    filePath: 'Workspace settings (cloud)',
+    desc: 'Autonomous agent platform',
+  },
+  {
+    id: 'openclaw',
+    name: 'OpenClaw',
+    badge: 'agent',
+    mockBrand: 'azure',
+    settingsPath: '~/.openclaw/config.toml',
+    filePath: '~/.openclaw/config.toml',
+    desc: 'Open-source MCP runtime',
   },
   {
     id: 'custom',
@@ -47,13 +71,12 @@ const MCP_CLIENTS = [
     mockBrand: 'terminal',
     settingsPath: 'Add to your runtime config',
     filePath: 'mcp-config.toml',
-    configKey: '[server.finance-mcp]',
     desc: 'Bring your own MCP host',
   },
 ];
 
 const CLIENT_CONFIG_SNIPPETS = {
-  claude: `{
+  claude_desktop: `{
   "mcpServers": {
     "finance-mcp": {
       "url": "https://mcp.upx-example.com/mcp",
@@ -62,26 +85,89 @@ const CLIENT_CONFIG_SNIPPETS = {
     }
   }
 }`,
-  cursor: `// ~/.cursor/mcp.json
+  claude_web: `// Pasted into the in-app "Add connector" dialog
 {
-  "finance-mcp": {
-    "transport": "http",
-    "url": "https://mcp.upx-example.com/mcp"
+  "name": "FinanceMCP",
+  "url": "https://mcp.upx-example.com/mcp",
+  "oauth": {
+    "authorizationUrl": "https://mcp.upx-example.com/.well-known/oauth-protected-resource"
   }
 }`,
   chatgpt: `{
-  "servers": [
+  "mcp_servers": [
     {
       "name": "finance-mcp",
       "url": "https://mcp.upx-example.com/mcp",
-      "scopes": ["accounts.read","balances.read","transactions.read"]
+      "auth": "oauth2",
+      "scopes": ["accounts.read", "balances.read", "transactions.read"]
     }
   ]
 }`,
+  cursor: `// ~/.cursor/mcp.json
+{
+  "mcpServers": {
+    "finance-mcp": {
+      "transport": "http",
+      "url": "https://mcp.upx-example.com/mcp"
+    }
+  }
+}`,
+  manus: `// Workspace › Tools › Add MCP endpoint
+{
+  "label": "FinanceMCP",
+  "endpoint": "https://mcp.upx-example.com/mcp",
+  "auth": "oauth2",
+  "agentRole": "financial-analyst"
+}`,
+  openclaw: `# ~/.openclaw/config.toml
+[mcp.servers.finance-mcp]
+url       = "https://mcp.upx-example.com/mcp"
+transport = "http"
+auth      = "oauth2"
+discovery = "https://mcp.upx-example.com/.well-known/oauth-protected-resource"`,
   custom: `[server.finance-mcp]
 url = "https://mcp.upx-example.com/mcp"
 auth = "oauth2"
 discovery = "https://mcp.upx-example.com/.well-known/oauth-protected-resource"`,
+};
+
+// Per-client copy for the "restart / apply" step
+const CLIENT_RESTART = {
+  claude_desktop: {
+    title: 'Restart Claude Desktop',
+    instruction: 'Quit Claude Desktop and open it again. You should see "finance-mcp" listed in available servers.',
+    actionLabel: 'It restarted',
+  },
+  claude_web: {
+    title: 'Authorize in your browser',
+    instruction: 'Claude Web will open a new tab to complete the OAuth handshake with FinanceMCP. After authorizing, return to the chat — the connector turns green.',
+    actionLabel: 'Authorized',
+  },
+  chatgpt: {
+    title: 'Activate the connector',
+    instruction: 'Toggle the FinanceMCP connector on. ChatGPT may ask you to sign in once with OAuth — do so to grant the read-only scopes.',
+    actionLabel: 'It connected',
+  },
+  cursor: {
+    title: 'Reload Cursor',
+    instruction: 'Cmd-Shift-P → "Developer: Reload Window". You should see finance-mcp under the MCP servers list.',
+    actionLabel: 'Reloaded',
+  },
+  manus: {
+    title: 'Publish the workspace',
+    instruction: 'Click Publish in the workspace settings. The new MCP endpoint is available to every agent in this workspace within seconds — no restart needed.',
+    actionLabel: 'Published',
+  },
+  openclaw: {
+    title: 'Reload the OpenClaw daemon',
+    instruction: 'Run "openclaw reload" (or send SIGHUP). The daemon re-reads ~/.openclaw/config.toml without dropping in-flight requests.',
+    actionLabel: 'Daemon reloaded',
+  },
+  custom: {
+    title: 'Restart your MCP host',
+    instruction: 'However your runtime reloads config — restart the process or re-source the file — make sure it picks up the new [server.finance-mcp] block.',
+    actionLabel: 'It picked it up',
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -228,17 +314,17 @@ function PickClientStep({ onPick }) {
   return (
     <div>
       <Pill variant="info" dot>1 of 4 · choose host</Pill>
-      <h1 style={{ marginTop: 14, marginBottom: 10 }}>Which AI client will you connect?</h1>
+      <h1 style={{ marginTop: 14, marginBottom: 10 }}>Choose the AI client to connect</h1>
       <p style={{ color: 'var(--text-muted)', fontSize: 14.5, lineHeight: 1.55, marginBottom: 28 }}>
         Pick the host that will talk to FinanceMCP. We'll walk you through the exact configuration
         with screenshots before touching any bank data.
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
-        {MCP_CLIENTS.map(c => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+        {MCP_CLIENTS.filter(c => c.id !== 'custom').map(c => (
           <button key={c.id} onClick={() => onPick(c.id)}
             className="card"
             style={{
-              padding: 18, display: 'flex', gap: 16, alignItems: 'flex-start',
+              padding: 16, display: 'flex', gap: 14, alignItems: 'flex-start',
               cursor: 'pointer', background: 'var(--surface)',
               transition: 'all .12s', textAlign: 'left',
             }}
@@ -249,13 +335,14 @@ function PickClientStep({ onPick }) {
             <ClientIcon brand={c.mockBrand} badge={c.badge}/>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 15, fontWeight: 500 }}>{c.name}</span>
+                <span style={{ fontSize: 14.5, fontWeight: 500 }}>{c.name}</span>
                 <Pill>{c.badge}</Pill>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.45 }}>
                 {c.desc}
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-dim)', marginTop: 8 }}
+              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6,
+                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                    className="mono">
                 {c.filePath}
               </div>
@@ -265,14 +352,32 @@ function PickClientStep({ onPick }) {
         ))}
       </div>
 
-      <div style={{
-        marginTop: 22, padding: '12px 14px', borderRadius: 10,
-        background: 'var(--surface-2)', fontSize: 12, color: 'var(--text-muted)',
-        display: 'flex', gap: 10, alignItems: 'center',
-      }}>
-        <I.Info size={14}/> Not seeing your client? Pick <strong style={{color:'var(--text)'}}>Custom / CLI</strong> —
-        any MCP host that speaks HTTP works.
-      </div>
+      {/* Advanced — custom row */}
+      {(() => {
+        const c = MCP_CLIENTS.find(x => x.id === 'custom');
+        return (
+          <button onClick={() => onPick(c.id)} className="card"
+            style={{
+              marginTop: 12, padding: 14, display: 'flex', gap: 12, alignItems: 'center',
+              cursor: 'pointer', background: 'var(--surface)',
+              transition: 'all .12s', textAlign: 'left', width: '100%',
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+            <ClientIcon brand={c.mockBrand} badge={c.badge}/>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 500 }}>{c.name}</span>
+                <Pill>advanced</Pill>
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>
+                {c.desc} — any MCP host that speaks HTTP works
+              </div>
+            </div>
+            <I.Chevron size={14} style={{ color: 'var(--text-dim)' }}/>
+          </button>
+        );
+      })()}
     </div>
   );
 }
@@ -280,13 +385,15 @@ function PickClientStep({ onPick }) {
 function ClientIcon({ brand, badge }) {
   // 3-tone abstract glyph that suggests the client without copying any real brand.
   const palettes = {
-    aurora:   { bg: 'oklch(0.95 0.04 285)', fg: 'oklch(0.55 0.16 285)' }, // violet hint
+    aurora:   { bg: 'oklch(0.95 0.04 285)', fg: 'oklch(0.55 0.16 285)' },  // violet
     graphite: { bg: 'oklch(0.95 0.005 250)', fg: 'oklch(0.30 0.01 250)' }, // dark gray
-    lagoon:   { bg: 'oklch(0.95 0.04 200)', fg: 'oklch(0.55 0.12 200)' }, // teal hint
-    terminal: { bg: 'oklch(0.18 0.01 150)', fg: 'oklch(0.85 0.12 150)' }, // dark/green
+    lagoon:   { bg: 'oklch(0.95 0.04 200)', fg: 'oklch(0.55 0.12 200)' },  // teal
+    sage:     { bg: 'oklch(0.95 0.04 145)', fg: 'oklch(0.45 0.14 145)' },  // green
+    coral:    { bg: 'oklch(0.94 0.05 30)',  fg: 'oklch(0.55 0.16 30)' },   // coral
+    azure:    { bg: 'oklch(0.94 0.05 245)', fg: 'oklch(0.50 0.15 245)' },  // blue
+    terminal: { bg: 'oklch(0.18 0.01 150)', fg: 'oklch(0.85 0.12 150)' },  // dark/green
   };
-  const p = palettes[brand];
-  const isTerminal = brand === 'terminal';
+  const p = palettes[brand] || palettes.graphite;
   return (
     <div style={{
       width: 44, height: 44, borderRadius: 11, flexShrink: 0,
@@ -299,6 +406,21 @@ function ClientIcon({ brand, badge }) {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="m9 16 -4-4 4-4"/><path d="m15 8 4 4-4 4"/>
+        </svg>
+      ) : badge === 'web' ? (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>
+        </svg>
+      ) : badge === 'agent' ? (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 3v3"/>
+          <rect x="5" y="6" width="14" height="12" rx="3"/>
+          <circle cx="9" cy="12" r="1.4" fill="currentColor"/>
+          <circle cx="15" cy="12" r="1.4" fill="currentColor"/>
+          <path d="M9 18v2M15 18v2"/>
         </svg>
       ) : (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -351,12 +473,13 @@ function ConfigureStep({ client, configStep, setConfigStep, onBack, onDone }) {
         />
         <ConfigCard
           n={3}
-          title={`Restart ${client.name}`}
-          instruction={`Quit and reopen ${client.name} so it picks up the new config. You should see "finance-mcp" listed in available servers.`}
+          title={CLIENT_RESTART[client.id]?.title || `Restart ${client.name}`}
+          instruction={CLIENT_RESTART[client.id]?.instruction
+            || `Quit and reopen ${client.name} so it picks up the new config. You should see "finance-mcp" listed in available servers.`}
           done={configStep >= 3}
           active={configStep === 2}
           mockup={<MockRestart client={client}/>}
-          actionLabel="It restarted"
+          actionLabel={CLIENT_RESTART[client.id]?.actionLabel || "It restarted"}
           onAction={() => setConfigStep(3)}
         />
       </div>
@@ -455,43 +578,63 @@ function MockWindow({ title, children, theme = 'light', width, height }) {
 
 // ── Mockup 1: Settings panel with menu item highlighted
 function MockSettings({ client }) {
-  const items = client.id === 'cursor'
-    ? ['General', 'Editor', 'Keybindings', 'MCP Servers', 'AI', 'Extensions']
-    : ['General', 'Account', 'Appearance', 'MCP Servers', 'Privacy', 'About'];
-  const highlightIdx = items.indexOf('MCP Servers');
-  const dark = client.id === 'cursor';
+  // Menu items vary per client to feel native
+  const menus = {
+    claude_desktop: { items: ['General', 'Account', 'Appearance', 'Developer', 'MCP Servers', 'About'],     theme: 'light', container: 'app' },
+    claude_web:     { items: ['Profile', 'Personalization', 'Memory', 'Connectors', 'Privacy', 'Subscription'], theme: 'light', container: 'browser', activeLabel: 'Connectors' },
+    chatgpt:        { items: ['General', 'Notifications', 'Personalization', 'Connectors', 'Speech', 'Data'],   theme: 'light', container: 'app', activeLabel: 'Connectors' },
+    cursor:         { items: ['General', 'Editor', 'Keybindings', 'MCP Servers', 'AI', 'Extensions'],          theme: 'dark',  container: 'app' },
+    manus:          { items: ['Workspace', 'Tools', 'Agents', 'Knowledge', 'Triggers', 'Billing'],             theme: 'light', container: 'app', activeLabel: 'Tools' },
+    openclaw:       { items: ['[server.x]', '[server.y]', '[mcp.servers.finance-mcp]', '[transport]', '[auth]'], theme: 'dark', container: 'editor' },
+    custom:         { items: ['env', 'transport', 'auth', '[server.finance-mcp]', 'logging'],                  theme: 'dark', container: 'editor' },
+  };
+  const cfg = menus[client.id] || menus.claude_desktop;
+  const dark = cfg.theme === 'dark';
+  const items = cfg.items;
+  const activeLabel = cfg.activeLabel || 'MCP Servers';
+  const highlightIdx = Math.max(0, items.findIndex(i => i.toLowerCase().includes(activeLabel.toLowerCase()) || activeLabel === 'MCP Servers' && i.toLowerCase().includes('mcp')));
+  const title = cfg.container === 'browser'
+    ? `claude.ai — Settings`
+    : cfg.container === 'editor'
+    ? client.filePath
+    : `${client.name} — Settings`;
+
   return (
-    <MockWindow title={`${client.name} — Settings`} theme={dark ? 'dark' : 'light'}>
+    <MockWindow title={title} theme={dark ? 'dark' : 'light'}>
       <div style={{ display: 'flex', height: 200 }}>
         <div style={{
-          width: 130, padding: 10, borderRight: `1px solid ${dark ? 'oklch(0.30 0.008 250)' : 'oklch(0.91 0.006 90)'}`,
+          width: 144, padding: 10, borderRight: `1px solid ${dark ? 'oklch(0.30 0.008 250)' : 'oklch(0.91 0.006 90)'}`,
           display: 'flex', flexDirection: 'column', gap: 2,
         }}>
           {items.map((it, i) => (
             <div key={i} style={{
               padding: '6px 8px', borderRadius: 5, fontSize: 11,
+              fontFamily: cfg.container === 'editor' ? 'var(--mono)' : 'inherit',
               background: i === highlightIdx ? (dark ? 'oklch(0.28 0.06 155)' : 'oklch(0.95 0.04 155)') : 'transparent',
               color: i === highlightIdx
                 ? (dark ? 'oklch(0.82 0.12 155)' : 'oklch(0.38 0.13 155)')
                 : (dark ? 'oklch(0.72 0.007 90)' : 'oklch(0.45 0.008 90)'),
               fontWeight: i === highlightIdx ? 500 : 400,
               display: 'flex', alignItems: 'center', gap: 6,
-              position: 'relative',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>
               <span style={{
                 width: 4, height: 4, borderRadius: '50%',
                 background: 'currentColor', opacity: i === highlightIdx ? 0.9 : 0.4,
+                flexShrink: 0,
               }}/>
               {it}
             </div>
           ))}
         </div>
-        <div style={{ flex: 1, padding: 12, position: 'relative' }}>
+        <div style={{ flex: 1, padding: 12, position: 'relative', minWidth: 0 }}>
           <PointerArrow side="left" label="Click here" />
-          <div style={{ fontSize: 10.5, opacity: 0.5, marginBottom: 8 }}>SETTINGS</div>
+          <div style={{ fontSize: 10.5, opacity: 0.5, marginBottom: 8, letterSpacing: '.06em' }}>
+            {activeLabel.toUpperCase()}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <MockField label="Server URL" width="80%"/>
-            <MockField label="Auth method" width="50%"/>
+            <MockField label={cfg.container === 'editor' ? 'url' : 'Server URL'} width="80%"/>
+            <MockField label={cfg.container === 'editor' ? 'auth' : 'Auth method'} width="50%"/>
             <MockField label="" width="35%" height={20} muted/>
           </div>
         </div>
@@ -555,8 +698,9 @@ function syntaxHighlightJson(text) {
 
 // ── Mockup 3: Restart confirmation
 function MockRestart({ client }) {
+  const dark = ['cursor', 'openclaw', 'custom'].includes(client.id);
   return (
-    <MockWindow title={client.name} theme={client.id === 'cursor' ? 'dark' : 'light'}>
+    <MockWindow title={client.name} theme={dark ? 'dark' : 'light'}>
       <div style={{
         height: 200, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16,
@@ -719,7 +863,7 @@ function VerifyStep({ client, verifyState, runVerify, onBack, onDone }) {
 }
 
 function MockChatVerify({ client, verified }) {
-  const dark = client.id === 'cursor';
+  const dark = ['cursor', 'openclaw', 'custom'].includes(client.id);
   return (
     <MockWindow title={client.name} theme={dark ? 'dark' : 'light'}>
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10,
